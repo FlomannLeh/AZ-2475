@@ -1,0 +1,492 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vollständiger Prototyp mit Vorfilterung</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+        .screen {
+            transition: opacity 0.3s ease-in-out;
+        }
+    </style>
+</head>
+<body class="bg-gray-200">
+
+    <div id="app-container" class="max-w-xl mx-auto bg-gray-100 shadow-lg" style="height: 100vh; display: flex; flex-direction: column;">
+
+        <!-- Screen 1: Event Selection -->
+        <div id="events-screen" class="screen w-full h-full flex flex-col">
+            <header class="bg-gray-800 text-white p-4 flex items-center justify-between shadow-md flex-shrink-0">
+                <h1 class="text-xl font-bold">Events</h1>
+                <button id="go-to-settings-btn">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 0 2l-.15.08a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l-.22-.38a2 2 0 0 0-.73-2.73l-.15-.1a2 2 0 0 1 0-2l.15-.08a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                </button>
+            </header>
+            <main id="events-list" class="flex-grow overflow-y-auto p-2 space-y-2"></main>
+            <footer class="p-4 bg-white border-t border-gray-300 flex-shrink-0">
+                <button class="w-full bg-orange-500 text-white font-bold py-3 px-4 rounded-lg shadow-md hover:bg-orange-600 transition-colors">
+                    Weiter (<span id="event-selection-count">0</span>)
+                </button>
+            </footer>
+        </div>
+        
+        <!-- Screen 2: Settings -->
+        <div id="settings-screen" class="screen w-full h-full flex-col hidden">
+            <header class="bg-gray-800 text-white p-4 flex items-center shadow-md flex-shrink-0">
+                <button id="back-to-events-btn">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
+                </button>
+                <h1 class="text-xl font-bold ml-4">Einstellungen</h1>
+            </header>
+            <main class="flex-grow overflow-y-auto bg-white">
+                <div class="divide-y divide-gray-200">
+                    <div class="p-4 flex justify-between items-center">
+                        <div>
+                            <p class="font-medium">Gerätename wählen</p>
+                            <p class="text-sm text-gray-500">iPad</p>
+                        </div>
+                    </div>
+                    <a href="#" id="go-to-price-tiers-btn" class="p-4 flex justify-between items-center hover:bg-gray-50">
+                        <div>
+                            <p class="font-medium">Preisstufen auswählen</p>
+                            <p class="text-sm text-gray-500">Ausgewählte Preisstufen einlassen</p>
+                        </div>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-gray-400"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                    </a>
+                     <a href="#" id="go-to-categories-btn" class="p-4 flex justify-between items-center hover:bg-gray-50">
+                        <div>
+                            <p class="font-medium">Kategorien auswählen</p>
+                            <p class="text-sm text-gray-500">Ausgewählte Kategorien einlassen</p>
+                        </div>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-gray-400"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                    </a>
+                </div>
+            </main>
+        </div>
+
+        <!-- Screen 3: Improved Price Tier Selection -->
+        <div id="preisstufen-screen" class="screen w-full h-full flex flex-col hidden">
+            <header class="bg-gray-800 text-white p-4 flex items-center shadow-md flex-shrink-0">
+                <button id="back-to-settings-from-tiers-btn">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
+                </button>
+                <h1 class="text-xl font-bold ml-4">Preisstufen auswählen</h1>
+            </header>
+            <div class="p-2 bg-white border-b border-gray-300 flex-shrink-0 space-y-2">
+                <div class="relative">
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Nach Veranstaltung filtern</label>
+                    <button id="tier-event-filter-toggle" class="w-full bg-gray-200 border-none rounded-md p-2 text-left flex justify-between items-center focus:ring-2 focus:ring-orange-500">
+                        <span id="tier-event-filter-label" class="truncate">Alle Veranstaltungen</span>
+                        <svg class="h-5 w-5 text-gray-500" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" /></svg>
+                    </button>
+                    <div id="tier-event-filter-panel" class="absolute z-10 w-full bg-white border border-gray-300 rounded-md shadow-lg mt-1 hidden max-h-60 overflow-y-auto"></div>
+                </div>
+                <div class="relative">
+                    <input id="tier-search-filter" type="text" placeholder="Preisstufe suchen..." class="w-full bg-gray-200 border-none rounded-md pl-10 pr-4 py-2 focus:ring-2 focus:ring-orange-500">
+                    <svg class="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-500" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                </div>
+            </div>
+            <main id="price-tiers-list" class="flex-grow overflow-y-auto p-2 space-y-3"></main>
+            <footer class="p-4 bg-white border-t border-gray-300 flex-shrink-0">
+                 <button class="w-full bg-orange-500 text-white font-bold py-3 px-4 rounded-lg shadow-md hover:bg-orange-600 transition-colors">
+                    Auswahl speichern (<span id="tier-selection-count">0</span>)
+                </button>
+            </footer>
+        </div>
+
+        <!-- Screen 4: Improved Category Selection -->
+        <div id="kategorien-screen" class="screen w-full h-full flex flex-col hidden">
+            <header class="bg-gray-800 text-white p-4 flex items-center shadow-md flex-shrink-0">
+                <button id="back-to-settings-from-categories-btn">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
+                </button>
+                <h1 class="text-xl font-bold ml-4">Kategorien auswählen</h1>
+            </header>
+            <div class="p-2 bg-white border-b border-gray-300 flex-shrink-0 space-y-2">
+                <div class="relative">
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Nach Veranstaltung filtern</label>
+                    <button id="category-event-filter-toggle" class="w-full bg-gray-200 border-none rounded-md p-2 text-left flex justify-between items-center focus:ring-2 focus:ring-orange-500">
+                        <span id="category-event-filter-label" class="truncate">Alle Veranstaltungen</span>
+                        <svg class="h-5 w-5 text-gray-500" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" /></svg>
+                    </button>
+                    <div id="category-event-filter-panel" class="absolute z-10 w-full bg-white border border-gray-300 rounded-md shadow-lg mt-1 hidden max-h-60 overflow-y-auto"></div>
+                </div>
+                <div class="relative">
+                    <input id="category-search-filter" type="text" placeholder="Kategorie suchen..." class="w-full bg-gray-200 border-none rounded-md pl-10 pr-4 py-2 focus:ring-2 focus:ring-orange-500">
+                    <svg class="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-500" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                </div>
+            </div>
+            <main id="categories-list" class="flex-grow overflow-y-auto p-2 space-y-3"></main>
+            <footer class="p-4 bg-white border-t border-gray-300 flex-shrink-0">
+                 <button class="w-full bg-orange-500 text-white font-bold py-3 px-4 rounded-lg shadow-md hover:bg-orange-600 transition-colors">
+                    Auswahl speichern (<span id="category-selection-count">0</span>)
+                </button>
+            </footer>
+        </div>
+
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // --- DATA ---
+            const priceTiersData = [
+                { id: 1, name: "Vollzahler", eventName: "Zuko-Test 1", eventId: "A4B1C9" },
+                { id: 2, name: "Ermäßigt", eventName: "Zuko-Test 1", eventId: "A4B1C9" },
+                { id: 3, name: "Kind", eventName: "Zuko-Test 1", eventId: "A4B1C9" },
+                { id: 4, name: "Vollzahler", eventName: "Personalisierungen Test", eventId: "D5E2F8" },
+                { id: 5, name: "VIP Ticket", eventName: "Personalisierungen Test", eventId: "D5E2F8" },
+                { id: 6, name: "Business Seat (Gold)", eventName: "Personalisierungen Test", eventId: "D5E2F8" },
+                { id: 7, name: "Vollzahler", eventName: "Ticketpapiere Querformat", eventId: "G6H3I7" },
+                { id: 8, name: "Ermäßigt", eventName: "Ticketpapiere Querformat", eventId: "G6H3I7" },
+                { id: 9, name: "Fan Block Fan Club", eventName: "Ticketpapiere Querformat", eventId: "G6H3I7" },
+                { id: 10, name: "Vollzahler", eventName: "Großes Festival 2027", eventId: "J7K4L6" },
+                { id: 11, name: "Ermäßigt", eventName: "Großes Festival 2027", eventId: "J7K4L6" },
+                { id: 12, name: "Kind", eventName: "Großes Festival 2027", eventId: "J7K4L6" },
+                { id: 13, name: "Wochenend-Pass", eventName: "Großes Festival 2027", eventId: "J7K4L6" }
+            ];
+             const categoriesData = [
+                { id: 101, name: "Stehplatz", eventName: "Zuko-Test 1", eventId: "A4B1C9" },
+                { id: 102, name: "Sitzplatz Parkett", eventName: "Zuko-Test 1", eventId: "A4B1C9" },
+                { id: 103, name: "Kategorie A", eventName: "Personalisierungen Test", eventId: "D5E2F8" },
+                { id: 104, name: "Kategorie B", eventName: "Personalisierungen Test", eventId: "D5E2F8" },
+                { id: 105, name: "Loge", eventName: "Personalisierungen Test", eventId: "D5E2F8" },
+                { id: 106, name: "Verzehrgutschein", eventName: "Ticketpapiere Querformat", eventId: "G6H3I7" },
+                { id: 107, name: "Parkschein", eventName: "Ticketpapiere Querformat", eventId: "G6H3I7" },
+                { id: 108, name: "Front of Stage", eventName: "Großes Festival 2027", eventId: "J7K4L6" },
+                { id: 109, name: "Golden Circle", eventName: "Großes Festival 2027", eventId: "J7K4L6" },
+                { id: 110, name: "Camping", eventName: "Großes Festival 2027", eventId: "J7K4L6" },
+            ];
+             const eventsData = [
+                { id: "A4B1C9", name: "Zuko-Test 1", date: "04.03.2026 / 00:00 Uhr", location: "Karlsruhe, Tollhaus Kulturzentrum e.V."},
+                { id: "D5E2F8", name: "Personalisierungen Test", date: "31.03.2026 / 20:00 Uhr", location: "Karlsruhe, Tollhaus Kulturzentrum e.V."},
+                { id: "G6H3I7", name: "Ticketpapiere Querformat", date: "08.08.2030 / 12:00 Uhr", location: "Karlsruhe, Tollhaus Kulturzentrum e.V."},
+                { id: "J7K4L6", name: "Großes Festival 2027", date: "15.06.2027 / 12:00 Uhr", location: "Berlin, Olympiastadion" }
+            ];
+
+            // --- APP STATE ---
+            const appState = {
+                selectedEventIdsFromEventsScreen: new Set(),
+                selectedPriceTierIds: new Set(),
+                priceTierFilterIds: new Set(),
+                priceTierSearchFilter: '',
+                selectedCategoryIds: new Set(),
+                categoryFilterIds: new Set(),
+                categorySearchFilter: '',
+            };
+
+            // --- DOM ELEMENTS ---
+            const screens = {
+                events: document.getElementById('events-screen'),
+                settings: document.getElementById('settings-screen'),
+                preisstufen: document.getElementById('preisstufen-screen'),
+                kategorien: document.getElementById('kategorien-screen'),
+            };
+            const eventsListEl = document.getElementById('events-list');
+            const eventSelectionCountEl = document.getElementById('event-selection-count');
+            
+            // Price Tiers Elements
+            const priceTiersListEl = document.getElementById('price-tiers-list');
+            const tierEventFilterToggleEl = document.getElementById('tier-event-filter-toggle');
+            const tierEventFilterLabelEl = document.getElementById('tier-event-filter-label');
+            const tierEventFilterPanelEl = document.getElementById('tier-event-filter-panel');
+            const tierSearchFilterEl = document.getElementById('tier-search-filter');
+            const tierSelectionCountEl = document.getElementById('tier-selection-count');
+
+            // Categories Elements
+            const categoriesListEl = document.getElementById('categories-list');
+            const categoryEventFilterToggleEl = document.getElementById('category-event-filter-toggle');
+            const categoryEventFilterLabelEl = document.getElementById('category-event-filter-label');
+            const categoryEventFilterPanelEl = document.getElementById('category-event-filter-panel');
+            const categorySearchFilterEl = document.getElementById('category-search-filter');
+            const categorySelectionCountEl = document.getElementById('category-selection-count');
+
+            // --- FUNCTIONS ---
+            const showScreen = (screenId) => {
+                Object.values(screens).forEach(screen => screen.classList.add('hidden', 'opacity-0'));
+                screens[screenId].classList.remove('hidden');
+                setTimeout(() => screens[screenId].classList.remove('opacity-0'), 10);
+            };
+
+            // --- Event Screen Logic ---
+            const updateEventSelectionCount = () => {
+                eventSelectionCountEl.textContent = appState.selectedEventIdsFromEventsScreen.size;
+            };
+
+            const renderEvents = () => {
+                eventsListEl.innerHTML = '';
+                eventsData.forEach(event => {
+                    const isSelected = appState.selectedEventIdsFromEventsScreen.has(event.id);
+                    const eventEl = document.createElement('div');
+                    eventEl.className = `bg-white p-4 rounded-lg border-2 ${isSelected ? 'border-orange-500 bg-orange-50' : 'border-transparent'} cursor-pointer shadow transition-all`;
+                    eventEl.innerHTML = `
+                        <div class="flex items-start justify-between">
+                            <div>
+                                <h3 class="font-bold text-gray-800">${event.name}</h3>
+                                <p class="text-sm text-gray-600">${event.date}</p>
+                            </div>
+                            <div class="flex-shrink-0 ml-4 w-6 h-6 rounded-full flex items-center justify-center ${isSelected ? 'bg-green-500' : 'border border-gray-400'}">
+                                ${isSelected ? '<svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path></svg>' : ''}
+                            </div>
+                        </div>`;
+                    eventEl.addEventListener('click', () => {
+                        if (appState.selectedEventIdsFromEventsScreen.has(event.id)) {
+                            appState.selectedEventIdsFromEventsScreen.delete(event.id);
+                        } else {
+                            appState.selectedEventIdsFromEventsScreen.add(event.id);
+                        }
+                        renderEvents();
+                        updateEventSelectionCount();
+                    });
+                    eventsListEl.appendChild(eventEl);
+                });
+            };
+
+            // --- Generic Factory for Price Tiers & Categories ---
+
+            const createFilterableListModule = (config) => {
+                const {
+                    listData,
+                    filterIdsStateKey,
+                    searchFilterStateKey,
+                    selectedIdsStateKey,
+                    filterToggleEl,
+                    filterLabelEl,
+                    filterPanelEl,
+                    searchFilterEl,
+                    listEl,
+                    selectionCountEl,
+                } = config;
+
+                const updateFilterDisplay = () => {
+                    const count = appState[filterIdsStateKey].size;
+                    const totalCount = eventsData.length;
+
+                    if (count === totalCount) {
+                        filterLabelEl.textContent = 'Alle Veranstaltungen';
+                    } else if (count === 0) {
+                        filterLabelEl.textContent = 'Keine Events ausgewählt';
+                    } else if (count === 1) {
+                        const eventId = appState[filterIdsStateKey].values().next().value;
+                        const event = eventsData.find(e => e.id === eventId);
+                        filterLabelEl.textContent = event ? event.name : '';
+                    } else {
+                        filterLabelEl.textContent = `${count} Events ausgewählt`;
+                    }
+                };
+                
+                const populateEventFilterPanel = () => {
+                    filterPanelEl.innerHTML = '';
+                    const allEventIds = eventsData.map(e => e.id);
+
+                    const selectAllContainer = document.createElement('div');
+                    selectAllContainer.className = 'p-2 hover:bg-gray-100 cursor-pointer border-b border-gray-200';
+                    const allSelected = appState[filterIdsStateKey].size === allEventIds.length;
+                    selectAllContainer.innerHTML = `
+                        <label class="flex items-center space-x-2">
+                            <input type="checkbox" class="form-checkbox h-4 w-4 text-orange-600 rounded">
+                            <span class="font-semibold">Alle auswählen / abwählen</span>
+                        </label>`;
+                    selectAllContainer.querySelector('input').checked = allSelected;
+                    selectAllContainer.addEventListener('change', (e) => {
+                        appState[filterIdsStateKey] = e.target.checked ? new Set(allEventIds) : new Set();
+                        populateEventFilterPanel();
+                        updateFilterDisplay();
+                        renderList();
+                    });
+                    filterPanelEl.appendChild(selectAllContainer);
+
+                    eventsData.forEach(event => {
+                        const container = document.createElement('div');
+                        container.className = 'p-2 hover:bg-gray-100 cursor-pointer';
+                        const isChecked = appState[filterIdsStateKey].has(event.id);
+                        container.innerHTML = `
+                            <label class="flex items-center space-x-2">
+                                <input type="checkbox" data-event-id="${event.id}" class="form-checkbox h-4 w-4 text-orange-600 rounded">
+                                <span>${event.name}</span>
+                            </label>`;
+                        container.querySelector('input').checked = isChecked;
+                        container.addEventListener('change', (e) => {
+                            const eventId = e.target.dataset.eventId;
+                            if (e.target.checked) appState[filterIdsStateKey].add(eventId);
+                            else appState[filterIdsStateKey].delete(eventId);
+                            populateEventFilterPanel();
+                            updateFilterDisplay();
+                            renderList();
+                        });
+                        filterPanelEl.appendChild(container);
+                    });
+                };
+                
+                const updateSelectionCount = () => {
+                    selectionCountEl.textContent = appState[selectedIdsStateKey].size;
+                };
+
+                const renderList = () => {
+                    listEl.innerHTML = '';
+
+                    if (appState[filterIdsStateKey].size === 0) {
+                        listEl.innerHTML = `<p class="text-center text-gray-500 p-4">Wählen Sie oben einen oder mehrere Events aus, um Einträge anzuzeigen.</p>`;
+                        return;
+                    }
+                    const tiersToFilter = listData.filter(item => appState[filterIdsStateKey].has(item.eventId));
+                    const searchedTiers = tiersToFilter.filter(item =>
+                        appState[searchFilterStateKey] === '' || item.name.toLowerCase().includes(appState[searchFilterStateKey].toLowerCase())
+                    );
+                    
+                    const eventsInFilter = new Set(searchedTiers.map(t => t.eventId));
+                    const isGroupedView = eventsInFilter.size > 1;
+
+                    if (isGroupedView) {
+                        const groupedByEvent = searchedTiers.reduce((acc, item) => {
+                            if (!acc[item.eventId]) { acc[item.eventId] = { eventName: item.eventName, items: [] }; }
+                            acc[item.eventId].items.push(item);
+                            return acc;
+                        }, {});
+
+                        if (Object.keys(groupedByEvent).length === 0) {
+                            listEl.innerHTML = `<p class="text-center text-gray-500 p-4">Keine Ergebnisse für Ihre Filter gefunden.</p>`;
+                            return;
+                        }
+
+                        Object.keys(groupedByEvent).sort((a, b) => groupedByEvent[a].eventName.localeCompare(groupedByEvent[b].eventName))
+                            .forEach(eventId => {
+                                const group = groupedByEvent[eventId];
+                                const groupWrapper = document.createElement('div');
+                                groupWrapper.className = 'bg-white rounded-lg shadow-sm overflow-hidden';
+                                groupWrapper.innerHTML = `<div class="bg-gray-100 p-3 border-b border-gray-200"><h3 class="font-semibold text-gray-900">${group.eventName} <span class="font-mono text-xs text-gray-500 ml-2">ID: ${eventId}</span></h3></div>`;
+                                group.items.forEach(item => {
+                                    const isSelected = appState[selectedIdsStateKey].has(item.id);
+                                    const itemEl = document.createElement('div');
+                                    itemEl.className = `p-4 border-t border-gray-200 cursor-pointer ${isSelected ? 'bg-orange-50' : 'bg-white'} hover:bg-gray-50 flex items-center justify-between`;
+                                    itemEl.innerHTML = `<p class="font-medium text-gray-800">${item.name}</p><div class="flex-shrink-0 ml-4 w-6 h-6 rounded-full flex items-center justify-center ${isSelected ? 'bg-green-500' : 'border border-gray-400'}">${isSelected ? '<svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path></svg>' : ''}</div>`;
+                                    itemEl.addEventListener('click', () => {
+                                        if (appState[selectedIdsStateKey].has(item.id)) { appState[selectedIdsStateKey].delete(item.id); } 
+                                        else { appState[selectedIdsStateKey].add(item.id); }
+                                        updateSelectionCount();
+                                        renderList();
+                                    });
+                                    groupWrapper.appendChild(itemEl);
+                                });
+                                listEl.appendChild(groupWrapper);
+                            });
+                    } else { // Flat view for single event
+                        const filteredItems = searchedTiers;
+                        if (filteredItems.length === 0) {
+                            listEl.innerHTML = `<p class="text-center text-gray-500 p-4">Keine Ergebnisse.</p>`;
+                            return;
+                        }
+                        filteredItems.forEach(item => {
+                            const isSelected = appState[selectedIdsStateKey].has(item.id);
+                            const itemEl = document.createElement('div');
+                            itemEl.className = `bg-white p-4 rounded-lg border-2 ${isSelected ? 'border-orange-500 bg-orange-50' : 'border-transparent'} cursor-pointer shadow-sm flex items-center justify-between`;
+                            itemEl.innerHTML = `<div><h3 class="font-bold text-gray-800">${item.name}</h3><p class="text-sm text-gray-500">${item.eventName} (<span class="font-mono text-xs">ID: ${item.eventId}</span>)</p></div><div class="flex-shrink-0 ml-4 w-6 h-6 rounded-full flex items-center justify-center ${isSelected ? 'bg-green-500' : 'border border-gray-400'}">${isSelected ? '<svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path></svg>' : ''}</div>`;
+                            itemEl.addEventListener('click', () => {
+                                if (appState[selectedIdsStateKey].has(item.id)) { appState[selectedIdsStateKey].delete(item.id); }
+                                else { appState[selectedIdsStateKey].add(item.id); }
+                                updateSelectionCount();
+                                renderList();
+                            });
+                            listEl.appendChild(itemEl);
+                        });
+                    }
+                };
+
+                filterToggleEl.addEventListener('click', () => filterPanelEl.classList.toggle('hidden'));
+                searchFilterEl.addEventListener('input', (e) => {
+                    appState[searchFilterStateKey] = e.target.value;
+                    renderList();
+                });
+
+                return {
+                    updateFilterDisplay,
+                    populateEventFilterPanel,
+                    updateSelectionCount,
+                    renderList,
+                };
+            };
+            
+            const tierModule = createFilterableListModule({
+                listData: priceTiersData,
+                filterIdsStateKey: 'priceTierFilterIds',
+                searchFilterStateKey: 'priceTierSearchFilter',
+                selectedIdsStateKey: 'selectedPriceTierIds',
+                filterToggleEl: tierEventFilterToggleEl,
+                filterLabelEl: tierEventFilterLabelEl,
+                filterPanelEl: tierEventFilterPanelEl,
+                searchFilterEl: tierSearchFilterEl,
+                listEl: priceTiersListEl,
+                selectionCountEl: tierSelectionCountEl,
+            });
+
+             const categoryModule = createFilterableListModule({
+                listData: categoriesData,
+                filterIdsStateKey: 'categoryFilterIds',
+                searchFilterStateKey: 'categorySearchFilter',
+                selectedIdsStateKey: 'selectedCategoryIds',
+                filterToggleEl: categoryEventFilterToggleEl,
+                filterLabelEl: categoryEventFilterLabelEl,
+                filterPanelEl: categoryEventFilterPanelEl,
+                searchFilterEl: categorySearchFilterEl,
+                listEl: categoriesListEl,
+                selectionCountEl: categorySelectionCountEl,
+            });
+
+            // --- Navigation and Event Listeners ---
+            document.getElementById('go-to-settings-btn').addEventListener('click', () => showScreen('settings'));
+            document.getElementById('back-to-events-btn').addEventListener('click', () => showScreen('events'));
+            document.getElementById('back-to-settings-from-tiers-btn').addEventListener('click', () => showScreen('settings'));
+            document.getElementById('back-to-settings-from-categories-btn').addEventListener('click', () => showScreen('settings'));
+
+            document.getElementById('go-to-price-tiers-btn').addEventListener('click', (e) => {
+                e.preventDefault();
+                const allEventIds = eventsData.map(e => e.id);
+                if (appState.selectedEventIdsFromEventsScreen.size > 0) {
+                    appState.priceTierFilterIds = new Set(appState.selectedEventIdsFromEventsScreen);
+                } else {
+                    appState.priceTierFilterIds = new Set(allEventIds);
+                }
+                tierModule.populateEventFilterPanel();
+                tierModule.updateFilterDisplay();
+                tierModule.renderList();
+                showScreen('preisstufen');
+            });
+            
+            document.getElementById('go-to-categories-btn').addEventListener('click', (e) => {
+                e.preventDefault();
+                const allEventIds = eventsData.map(e => e.id);
+                if (appState.selectedEventIdsFromEventsScreen.size > 0) {
+                    appState.categoryFilterIds = new Set(appState.selectedEventIdsFromEventsScreen);
+                } else {
+                    appState.categoryFilterIds = new Set(allEventIds);
+                }
+                categoryModule.populateEventFilterPanel();
+                categoryModule.updateFilterDisplay();
+                categoryModule.renderList();
+                showScreen('kategorien');
+            });
+
+            // --- INITIALIZATION ---
+            renderEvents();
+            updateEventSelectionCount();
+            
+            tierModule.populateEventFilterPanel();
+            tierModule.updateSelectionCount();
+            tierModule.renderList();
+            
+            categoryModule.populateEventFilterPanel();
+            categoryModule.updateSelectionCount();
+            categoryModule.renderList();
+
+            showScreen('events');
+        });
+    </script>
+</body>
+</html>
+
