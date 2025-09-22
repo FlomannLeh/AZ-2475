@@ -176,9 +176,11 @@
                 selectedPriceTierIds: new Set(),
                 priceTierFilterIds: new Set(),
                 priceTierSearchFilter: '',
+                collapsedTierGroups: new Set(),
                 selectedCategoryIds: new Set(),
                 categoryFilterIds: new Set(),
                 categorySearchFilter: '',
+                collapsedCategoryGroups: new Set(),
             };
 
             // --- DOM ELEMENTS ---
@@ -230,6 +232,7 @@
                             <div>
                                 <h3 class="font-bold text-gray-800">${event.name}</h3>
                                 <p class="text-sm text-gray-600">${event.date}</p>
+                                <p class="text-xs text-gray-500 font-mono mt-1">ID: ${event.id}</p>
                             </div>
                             <div class="flex-shrink-0 ml-4 w-6 h-6 rounded-full flex items-center justify-center ${isSelected ? 'bg-green-500' : 'border border-gray-400'}">
                                 ${isSelected ? '<svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path></svg>' : ''}
@@ -256,6 +259,7 @@
                     filterIdsStateKey,
                     searchFilterStateKey,
                     selectedIdsStateKey,
+                    collapsedGroupsStateKey,
                     filterToggleEl,
                     filterLabelEl,
                     filterPanelEl,
@@ -360,20 +364,43 @@
                                 const group = groupedByEvent[eventId];
                                 const groupWrapper = document.createElement('div');
                                 groupWrapper.className = 'bg-white rounded-lg shadow-sm overflow-hidden';
-                                groupWrapper.innerHTML = `<div class="bg-gray-100 p-3 border-b border-gray-200"><h3 class="font-semibold text-gray-900">${group.eventName} <span class="font-mono text-xs text-gray-500 ml-2">ID: ${eventId}</span></h3></div>`;
-                                group.items.forEach(item => {
-                                    const isSelected = appState[selectedIdsStateKey].has(item.id);
-                                    const itemEl = document.createElement('div');
-                                    itemEl.className = `p-4 border-t border-gray-200 cursor-pointer ${isSelected ? 'bg-orange-50' : 'bg-white'} hover:bg-gray-50 flex items-center justify-between`;
-                                    itemEl.innerHTML = `<p class="font-medium text-gray-800">${item.name}</p><div class="flex-shrink-0 ml-4 w-6 h-6 rounded-full flex items-center justify-center ${isSelected ? 'bg-green-500' : 'border border-gray-400'}">${isSelected ? '<svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path></svg>' : ''}</div>`;
-                                    itemEl.addEventListener('click', () => {
-                                        if (appState[selectedIdsStateKey].has(item.id)) { appState[selectedIdsStateKey].delete(item.id); } 
-                                        else { appState[selectedIdsStateKey].add(item.id); }
-                                        updateSelectionCount();
-                                        renderList();
-                                    });
-                                    groupWrapper.appendChild(itemEl);
+                                
+                                const isCollapsed = appState[collapsedGroupsStateKey].has(eventId);
+
+                                const headerEl = document.createElement('div');
+                                headerEl.className = 'bg-gray-100 p-3 border-b border-gray-200 cursor-pointer flex justify-between items-center';
+                                headerEl.innerHTML = `
+                                    <h3 class="font-semibold text-gray-900">${group.eventName} <span class="font-mono text-xs text-gray-500 ml-2">ID: ${eventId}</span></h3>
+                                    <svg class="h-5 w-5 text-gray-500 transition-transform transform ${isCollapsed ? '' : 'rotate-180'}" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                                        <path fill-rule="evenodd" d="M14.707 12.707a1 1 0 01-1.414 0L10 9.414l-3.293 3.293a1 1 0 01-1.414-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 010 1.414z" clip-rule="evenodd" />
+                                    </svg>
+                                `;
+                                headerEl.addEventListener('click', () => {
+                                    const collapsedSet = appState[collapsedGroupsStateKey];
+                                    if (collapsedSet.has(eventId)) {
+                                        collapsedSet.delete(eventId);
+                                    } else {
+                                        collapsedSet.add(eventId);
+                                    }
+                                    renderList();
                                 });
+                                groupWrapper.appendChild(headerEl);
+
+                                if (!isCollapsed) {
+                                    group.items.forEach(item => {
+                                        const isSelected = appState[selectedIdsStateKey].has(item.id);
+                                        const itemEl = document.createElement('div');
+                                        itemEl.className = `p-4 border-t border-gray-200 cursor-pointer ${isSelected ? 'bg-orange-50' : 'bg-white'} hover:bg-gray-50 flex items-center justify-between`;
+                                        itemEl.innerHTML = `<p class="font-medium text-gray-800">${item.name}</p><div class="flex-shrink-0 ml-4 w-6 h-6 rounded-full flex items-center justify-center ${isSelected ? 'bg-green-500' : 'border border-gray-400'}">${isSelected ? '<svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path></svg>' : ''}</div>`;
+                                        itemEl.addEventListener('click', () => {
+                                            if (appState[selectedIdsStateKey].has(item.id)) { appState[selectedIdsStateKey].delete(item.id); } 
+                                            else { appState[selectedIdsStateKey].add(item.id); }
+                                            updateSelectionCount();
+                                            renderList();
+                                        });
+                                        groupWrapper.appendChild(itemEl);
+                                    });
+                                }
                                 listEl.appendChild(groupWrapper);
                             });
                     } else { // Flat view for single event
@@ -417,6 +444,7 @@
                 filterIdsStateKey: 'priceTierFilterIds',
                 searchFilterStateKey: 'priceTierSearchFilter',
                 selectedIdsStateKey: 'selectedPriceTierIds',
+                collapsedGroupsStateKey: 'collapsedTierGroups',
                 filterToggleEl: tierEventFilterToggleEl,
                 filterLabelEl: tierEventFilterLabelEl,
                 filterPanelEl: tierEventFilterPanelEl,
@@ -430,6 +458,7 @@
                 filterIdsStateKey: 'categoryFilterIds',
                 searchFilterStateKey: 'categorySearchFilter',
                 selectedIdsStateKey: 'selectedCategoryIds',
+                collapsedGroupsStateKey: 'collapsedCategoryGroups',
                 filterToggleEl: categoryEventFilterToggleEl,
                 filterLabelEl: categoryEventFilterLabelEl,
                 filterPanelEl: categoryEventFilterPanelEl,
